@@ -9,19 +9,32 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-```{r import data}
-library(readxl)
-hta_vih <- read_excel("hta_vih.xlsx")
-View(hta_vih)
+```{r loading libraries}
+pacman::p_load(
+  plotly,
+  lme4,
+  readxl,
+  dplyr,
+  Hmisc,
+  ggplot2,
+  purrr
+)
 ```
 
-```{r dataset}
+
+
+```{r import data}
+hta_vih <- read_excel("hta_vih.xlsx")
 str(hta_vih)
 ```
 
+```{r data recocoding }
+
+
+```
+
 ```{r univariate data}
-library("Hmisc")
+
 describe(hta_vih)
 ```
 
