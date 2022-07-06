@@ -11,64 +11,121 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r loading libraries}
 pacman::p_load(
-  plotly,
-  lme4,
   readxl,
   dplyr,
-  Hmisc,
-  ggplot2,
-  purrr
+  ggplot2
 )
 ```
 
 
-
 ```{r import data}
 hta_vih <- read_excel("hta_vih.xlsx")
-str(hta_vih)
+glimpse(hta_vih)          
 ```
 
 ```{r data recocoding }
-
-
+hta <- hta_vih %>%
+  rename(
+      id_depart = `MNT_odk-I-I1`,
+      centre = `MNT_odk-I-I2`,
+      id_enq = `MNT_odk-I-I3`,
+      num_enr = `MNT_odk-I-serial_num`,
+      date = `MNT_odk-I-I4`,
+      sexe = `MNT_odk-S-S1`,
+      age = `MNT_odk-S-S2`,
+      niv_instr = `MNT_odk-S-S3`,
+      ethnie = `MNT_odk-S-S4`,
+      etat_civil = `MNT_odk-S-S5`,
+      ctg_sociopro = `MNT_odk-S-S6`,
+      tabagisme = `MNT_odk-M1`,
+      alcool = `MNT_odk-M7`,
+      nbre_jrs_cons_fruit = `MNT_odk-MHA-M11`,
+      nbre_port_fruit_jrs = `MNT_odk-MHA-M12`,
+      nbre_jrs_cons_leg = `MNT_odk-MHA-M13`,
+      nbre_port_leg_jrs = `MNT_odk-MHA-M14`,
+      freq_ajt_sel = `MNT_odk-MSA-M15`,
+      freq_cons_plat_sel = `MNT_odk-MSA-M16`,
+      act_phsq_travail = `MNT_odk-MAP-M18`,
+      act_phsq_dpl = `MNT_odk-MAP-M20`,
+      act_phsq_loisir = `MNT_odk-MAP-M23`,
+      duree_ass_couch_jr = `MNT_odk-MAP-M25`,
+      ant_hta = `MNT_odk-AHTA-A1`,
+      trat_mod_hta = `MNT_odk-AHTA-A2`,
+      trat_trad_hta = `MNT_odk-AHTA-A3`,
+      ant_diabete = `MNT_odk-AD-A4`,
+      trat_mod_diabete = `MNT_odk-AD-A5`,
+      trat_trad_diabete = `MNT_odk-AD-A6`,
+      ant_hchol = `MNT_odk-ACE-A7`,
+      trat_mod_hchol = `MNT_odk-ACE-A8`,
+      trat_trad_hchol = `MNT_odk-ACE-A9`,
+      ant_card = `MNT_odk-AMC-A10`,
+      aspir_proph = `MNT_odk-AMC-A11`,
+      statine = `MNT_odk-AMC-A12`,
+      depression = `MNT_odk-D-D1`,
+      fatigue = `MNT_odk-D-D2`,
+      dim_interet = `MNT_odk-D-D3`,
+      gn_pert_pds = `MNT_odk-D-D4`,
+      insm_hysm = `MNT_odk-D-D5`,
+      agt_rlt_psych = `MNT_odk-D-D6`,
+      ftg_pert_eng = `MNT_odk-D-D7`,
+      devalorisation = `MNT_odk-D-D8`,
+      dim_apt_penser = `MNT_odk-D-D9`,
+      idee_mort = `MNT_odk-D-D10`,
+      ronflement_fort = `MNT_odk-DS-D11`,
+      ftg_sml = `MNT_odk-DS-D12`,
+      arret_resp_noct = `MNT_odk-DS-D13`,
+      hta = `MNT_odk-DS-D14`,
+      tour_cou_imp = `MNT_odk-DS-D17`,
+      tas = `MNT_odk-P-P1_1`,
+      tad = `MNT_odk-P-P1_2`,
+      enceinte = `MNT_odk-P-P2`,
+      taille = `MNT_odk-P-P3`,
+      poids = `MNT_odk-P-P4`,
+      tour_taille = `MNT_odk-P-P5`,
+      tour_hanche = `MNT_odk-P-P6`,
+      pouls = `MNT_odk-P-P7`,
+      an_depsg = `MNT_odk-V-V1`,
+      date_debut = `debarv`,
+      stde_vih = `MNT_odk-V-V4`,
+      trtment_arv_1 = `arv1`,
+      trtment_arv_2 = `arv2`,
+      trtment_arv_3 = `arv3`,
+      trtment_arv_4 = `arv4`,
+      trtment_arv_5 = `arv5`,
+      echec_imun = `MNT_odk-V-V6`,
+      echec_virol = `MNT_odk-V-V7`,
+      ext_exm_paracl = `MNT_odk-E-E1`,
+      dte_realisation = `MNT_odk-E-E2`,
+      glycemie = `MNT_odk-E-E3`,
+      hgb_glyquee = `MNT_odk-E-E4`,
+      chl_total = `MNT_odk-E-E5`,
+      chl_hdl = `MNT_odk-E-E6`,
+      chl_ldl = `MNT_odk-E-E7`,
+      triglycerides = `MNT_odk-E-E8`,
+      uree = `MNT_odk-E-E9`,
+      creatinine = `MNT_odk-E-E10`
+       )
 ```
 
-```{r univariate data}
-
-describe(hta_vih)
+```{r IMC}
+hta <- mutate(hta, 
+       tailm = taille / 100,
+       imc = poids / (tailm * tailm)
+       ) 
+sum(with(hta,imc > 25), na.rm = TRUE)
 ```
 
-```{r test de normality on numeric variables using}
-shapiro.test(hta_vih$`MNT_odk-MHA-M11`)
-shapiro.test(hta_vih$`MNT_odk-MHA-M12`)
-shapiro.test(hta_vih$`MNT_odk-MHA-M13`)
-shapiro.test(hta_vih$`MNT_odk-MHA-M14`)
-shapiro.test(hta_vih$`MNT_odk-P-P1_1`)
-shapiro.test(hta_vih$`MNT_odk-P-P1_2`)
-shapiro.test(hta_vih$`MNT_odk-P-P3`)
-shapiro.test(hta_vih$`MNT_odk-P-P4`)
-shapiro.test(hta_vih$`MNT_odk-P-P5`)
-shapiro.test(hta_vih$`MNT_odk-P-P6`)
-shapiro.test(hta_vih$`MNT_odk-P-P7`)
-shapiro.test(hta_vih$`MNT_odk-E-E3`)
-shapiro.test(hta_vih$`MNT_odk-E-E4`)
-shapiro.test(hta_vih$`MNT_odk-E-E5`)
-shapiro.test(hta_vih$`MNT_odk-E-E6`)
-shapiro.test(hta_vih$`MNT_odk-E-E7`)
-shapiro.test(hta_vih$`MNT_odk-E-E8`)
-shapiro.test(hta_vih$`MNT_odk-E-E9`)
-shapiro.test(hta_vih$`MNT_odk-E-E10`)
+```{r pression arterielle}
+sum(with(hta,tas > 140), na.rm = TRUE)
+sum(with(hta,tad > 90), na.rm = TRUE)
 ```
 
 ```{r Visualization of normality of numerical variables}
-library(ggplot2)
-boxplot(hta_vih$`MNT_odk-E-E9`)
-histogram(hta_vih$`MNT_odk-E-E9`)
-qqplot(hta_vih$`MNT_odk-E-E9`, hta_vih$`MNT_odk-E-E10`)
+
 ```
 
 ```{r Visualization of the correlation}
-cor.test(hta_vih$`MNT_odk-E-E5`, hta_vih$`MNT_odk-E-E8`)
+
 ```
 
 
