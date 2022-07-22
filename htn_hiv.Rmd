@@ -11,9 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r loading libraries}
 pacman::p_load(
-  readxl,
-  dplyr,
-  ggplot2
+  tidyverse,
+  readxl
 )
 ```
 
@@ -108,11 +107,11 @@ hta <- hta_vih %>%
 ```
 
 ```{r IMC}
-hta <- mutate(hta, 
+hta_imc <- mutate(hta, 
        tailm = taille / 100,
        imc = poids / (tailm * tailm)
        ) 
-sum(with(hta,imc > 25), na.rm = TRUE)
+sum(with(hta_imc,imc > 25), na.rm = TRUE)
 ```
 
 ```{r pression arterielle}
@@ -120,12 +119,23 @@ sum(with(hta,tas > 140), na.rm = TRUE)
 sum(with(hta,tad > 90), na.rm = TRUE)
 ```
 
-```{r Visualization of normality of numerical variables}
+```{r categorisation of the IMC}
+hta_c_imc <- hta_imc %>% 
+  mutate(
+    imc_c = factor(ifelse( imc < 25 & imc > 18.5, "normal", 
+                           ifelse(imc > 25 & imc < 30, "overweight", "obese"))
+  ))
 
+table(hta_c_imc$imc_c)
 ```
 
-```{r Visualization of the correlation}
+```{r categorisation of hypertension}
+hta_hyp <- hta %>% 
+  mutate(
+    hyp_c = factor(ifelse(tas > 140 & tad < 90, "hypertension", "non hypertension")
+    ))
 
+table(hta_hyp$hyp_c)
 ```
 
 
