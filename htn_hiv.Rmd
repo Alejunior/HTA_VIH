@@ -23,7 +23,7 @@ glimpse(hta_vih)
 ```
 
 ```{r data recocoding }
-hta <- hta_vih %>%
+hta <- hta_vih %>% 
   rename(
       id_depart = `MNT_odk-I-I1`,
       centre = `MNT_odk-I-I2`,
@@ -103,39 +103,132 @@ hta <- hta_vih %>%
       triglycerides = `MNT_odk-E-E8`,
       uree = `MNT_odk-E-E9`,
       creatinine = `MNT_odk-E-E10`
-       )
-```
-
-```{r IMC}
-hta_imc <- mutate(hta, 
+       ) %>% 
+  mutate( 
        tailm = taille / 100,
-       imc = poids / (tailm * tailm)
-       ) 
-sum(with(hta_imc,imc > 25), na.rm = TRUE)
+       imc = round(poids / (tailm * tailm),2),
+        imc_c = factor(
+          ifelse(
+            imc < 18.5, "underweight",
+            ifelse(imc < 25 & imc > 18.5, "normal weight", "overweight and obese"))),
+       
+       hta = factor(
+         ifelse(
+           hta == 0, "no", "yes")
+         ),
+       trat_mod_hta = factor(
+         ifelse(
+           trat_mod_hta == 0, "no", "yes")
+         ),
+       hta_c = factor(
+            ifelse(
+              tas > 129 & tad > 79 | hta == "yes" | trat_mod_hta == "yes" , "hta", "non hta")
+       ),
+            sexe = factor(
+              ifelse(
+                sexe == 1, "homme", "femme")
+              ),
+       tabagisme = factor(
+         ifelse(
+           tabagisme == 0, "no fumeur",
+           ifelse(tabagisme == 1, "ancien fumeur", "fumeur actuel"))
+       ),
+       alcool = factor(
+         ifelse(
+           alcool == 0, "no buveur",
+           ifelse(alcool == 1, "ancien buveur", "buveur actuel"))
+       ),
+       ethnie = factor(
+         ifelse(
+           ethnie == 1, "fon",
+           ifelse( ethnie == 2, "adja",
+                   ifelse(ethnie == 3, "yoruba",
+                          ifelse(ethnie == 4, "bariba",
+                                 ifelse(ethnie == 5, "dendi",
+                                        ifelse(ethnie == 6, "peulh",
+                                               ifelse(ethnie == 7, "yoa",
+                                                      ifelse(ethnie == 8, "otamarie",
+                                                             ifelse(ethnie == 9, "autre", "non repondu")))))))))
+         ),
+       niv_instr = factor(
+         ifelse(
+           niv_instr == 1, "aucun",
+           ifelse( niv_instr == 2, "primaire",
+                   ifelse(niv_instr == 3, "secondaire",
+                          ifelse(niv_instr == 4, "universitaire", "non repondu"))))
+         ),
+       ctg_sociopro = factor(
+         ifelse(
+           ctg_sociopro == 1, "employe etat",
+           ifelse( ctg_sociopro == 2, "employe prive",
+                   ifelse(ctg_sociopro == 3, "independant",
+                          ifelse(ctg_sociopro == 4, "benevole",
+                                 ifelse(ctg_sociopro == 5, "etudiant",
+                                        ifelse(ctg_sociopro == 6, "maitresse maison",
+                                               ifelse(ctg_sociopro == 7, "retraite",
+                                                      ifelse(ctg_sociopro == 8, "chomeur",
+                                                             ifelse(ctg_sociopro == 9, "invalide", "refusee")))))))))
+       ),
+       stde_vih = factor(
+         ifelse(
+           stde_vih == 1, "stade 1",
+           ifelse( stde_vih == 2, "stade 2",
+                   ifelse(stde_vih == 3, "stade 3", "stade 4")))
+         ),
+            )
+glimpse(hta)
+
 ```
+```{r Characteristics of the study participants}
+a <- table(hta$sexe)
+prop.table(a)
 
-```{r pression arterielle}
-sum(with(hta,tas > 140), na.rm = TRUE)
-sum(with(hta,tad > 90), na.rm = TRUE)
+summary(hta$age)
+table(hta$age < 42)
+
+
+
 ```
+```{r prevalence of overweight and obesity}
+summary(hta$imc)
 
-```{r categorisation of the IMC}
-hta_c_imc <- hta_imc %>% 
-  mutate(
-    imc_c = factor(ifelse( imc < 25 & imc > 18.5, "normal", 
-                           ifelse(imc > 25 & imc < 30, "overweight", "obese"))
-  ))
+indice <- table(hta$imc_c)
+indice
+prop.table(indice) * 100
 
-table(hta_c_imc$imc_c)
+ggplot(data = hta) + 
+  geom_bar(mapping = aes(x = imc_c, fill = sexe), position = "dodge")
 ```
 
 ```{r categorisation of hypertension}
-hta_hyp <- hta %>% 
-  mutate(
-    hyp_c = factor(ifelse(tas > 140 & tad < 90, "hypertension", "non hypertension")
-    ))
 
-table(hta_hyp$hyp_c)
+hyper <- table(hta$hta_c)
+hyper
+prop.table(hyper) * 100
+
+
+hyp <- table(hta$hta)
+prop.table(hyp) * 100
+
+table(hta$ant_hta)
+prop.table(table(hta$ant_hta)) * 100
+
+table(hta$enceinte)
+```
+
+
+```{r Factor associated with overweight and obesity}
+logit <- glm(
+  formula = hta_c ~ age + 
+    sexe + 
+    tabagisme + 
+    alcool +
+    niv_instr +
+    imc_c + 
+    pouls + 
+    stde_vih, 
+  data = hta, family = "binomial")
+summary(logit)
 ```
 
 
